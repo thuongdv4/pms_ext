@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // lưu vào localstorage
             // console.log('start luu vao localstoreage');
             localStorage.setItem("endDate", null);
+            localStorage.setItem("departmentCode", 'ALL');
             // console.log('end luu vao localstoreage');
             
             const fromDateToDate = 10000101;
@@ -100,7 +101,9 @@ document.addEventListener("DOMContentLoaded", () => {
             dashboard.worksheets.forEach((worksheet) => {
                 worksheet.getFiltersAsync().then((filters) => {
                     filters.forEach((filter) => {
-                        worksheet.clearFilterAsync(filter.fieldName);
+                        if (filter.fieldName !== "Trans_Date_Calc") { 
+                            worksheet.clearFilterAsync(filter.fieldName);
+                        }
                     });
                 });
             });
