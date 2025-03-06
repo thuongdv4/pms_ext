@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error(err);
             });
 
-            clearAllFilters();
+            // clearAllFilters();
         }
 
         function init() {

@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error(err);
             });
 
-            clearAllFilters();
+            // clearAllFilters();
         }
 
         // Thêm trạng thái loading
