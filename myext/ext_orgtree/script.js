@@ -11,18 +11,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const dashboard = tableau.extensions.dashboardContent.dashboard;
         let worksheets = dashboard.worksheets;
         const worksheetName = "OrgCodeSheet"; // Tên worksheet cần lấy
-        const filterField = "filter_reset_Departmentcode"; // 🔴 Đổi tên filter nếu cần
+        const filterField = "Departmentcode"; // 🔴 Đổi tên filter nếu cần
 
         // lấy từ localstorage
-        treeData = JSON.parse(localStorage.getItem("treeData"));
+        // treeData = JSON.parse(localStorage.getItem("treeData"));
+        fetchData();
+
         selectedData = JSON.parse(localStorage.getItem("selectedData"));
 
-        if (!treeData) {
-            fetchData();
-            removeParentRefs(treeData); // Xóa vòng lặp trước khi truyền
-            // luu vao localStorage
-            localStorage.setItem("treeData", JSON.stringify(treeData));
-        }
+        // if (treeData && treeData.length !== 0) {
+        //     console.log('fetch tree data thành công')
+        //     removeParentRefs(treeData); // Xóa vòng lặp trước khi truyền
+        //     // luu vao localStorage
+        //     localStorage.setItem("treeData", JSON.stringify(treeData));
+        // } else {
+        //     console.log('fetch tree data không thành công')
+        // }
 
         if (!selectedData) {
             // khởi tạo giá trị lần đầu load extension lên
@@ -51,6 +55,26 @@ document.addEventListener("DOMContentLoaded", () => {
             tableau.extensions.ui.displayDialogAsync(popupUrl, JSON.stringify(popupData), { width: 600, height: 800 })
                 .then((payload) => {
                     
+                    // // kiểm tra treeData nếu rỗng thì lấy lại từ localstorage
+                    // if (!treeData || treeData.length === 0) {
+                    //     treeData = JSON.parse(localStorage.getItem("treeData"));
+                    //     console.log('treeData null -> lay lai tu localstorage');
+                    // }
+
+                    // // kiểm tra nếu vẫn rỗng thì láy từ localstorage
+                    // if (!treeData || treeData.length === 0) {
+                    //     console.log('treeData vẫn null -> fetch lại dữ liệu');
+                    //     fetchData();
+                    //     if (!treeData || treeData.length === 0)  {
+                    //         removeParentRefs(treeData); // Xóa vòng lặp trước khi truyền
+                    //         // luu vao localStorage
+                    //         localStorage.setItem("treeData", JSON.stringify(treeData));
+                    //         console.log('fetch lại tree data thành công')
+                    //     } else {
+                    //         console.log('fetch lại tree data lỗi - vẫn null')
+                    //     }
+                    // }
+
                     let receivedValue  = JSON.parse(payload);
                     if (receivedValue.action === 'ok') {
                         selectedData = {
