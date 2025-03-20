@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const dashboard = tableau.extensions.dashboardContent.dashboard;
         let worksheets = dashboard.worksheets;
         const worksheetName = "OrgCodeSheet"; // Tên worksheet cần lấy
-        const filterField = "Departmentcode"; // 🔴 Đổi tên filter nếu cần
+        const filterField = "BU_ID"; // 🔴 Đổi tên filter nếu cần
 
         // lấy từ localstorage
         // treeData = JSON.parse(localStorage.getItem("treeData"));
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // khởi tạo giá trị lần đầu load extension lên
             selectedData = {
                 "action": "INIT",
-                "selectedIds": [],
+                "selectedIds": "ALL",
                 "selectedCodes": "ALL",
                 "showIds": ["ALL"],
                 "isAll": "ALL",
@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
             localStorage.setItem("selectedData", JSON.stringify(selectedData));
             localStorage.setItem("departmentCode", selectedData.selectedCodes);
+            localStorage.setItem("selectedIds", selectedData.selectedIds);
         }
 
         document.getElementById("selected-box").value = selectedData.selectedCodes;
@@ -88,10 +89,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         localStorage.setItem("selectedData", JSON.stringify(selectedData));
                         localStorage.setItem("departmentCode", selectedData.selectedCodes);
+                        localStorage.setItem("selectedIds", selectedData.selectedIds);
 
                         document.getElementById("selected-box").value = selectedData.selectedCodes;
 
-                        setFilterOrgCodeByDepartmentCode(selectedData.selectedCodes, selectedData.isAll);
+                        setFilterOrg(selectedData.selectedIds, selectedData.isAll);
                     } else {
                         console.log("Calcel");
                     }
@@ -110,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         //         if (event.newValue === null || event.newValue === 'ALL') {
         //             selectedData = {
         //                     "action": "INIT",
-        //                     "selectedIds": [],
+        //                     "selectedIds": "ALL",
         //                     "selectedCodes": "ALL",
         //                     "showIds": ["ALL"],
         //                     "isAll": "ALL",
@@ -118,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
         //                 }
         //             localStorage.setItem("selectedData", JSON.stringify(selectedData));
         //             localStorage.setItem("departmentCode", selectedData.selectedCodes);
+        //             localStorage.setItem("selectedIds", selectedData.selectedIds);
         //         } else {
         //             selectedData.selectedCodes = event.newValue
         //         }
@@ -136,38 +139,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
         function transformDataToTree(data) {
             if (!data.data.length) return null; // Nếu dữ liệu rỗng, trả về null
-        
+
             const nodes = {};
             let rootId = data.data[0][0].value; // Lấy ID của dòng đầu tiên làm root
-        
+
             data.data.forEach(row => {
                 const id = row[0].value;
                 const parentId = row[1].value;
                 const label = row[2].value;
-                const code = row[3].value; // Đọc thêm cột code
-        
+                const code = row[3].value; 
+                const ord = row[4].value !== null ? parseInt(row[4].value, 10) || 0 : Number.MAX_SAFE_INTEGER; // Ép kiểu thành số
+
                 if (!nodes[id]) {
-                    nodes[id] = { id, name: label, code, children: [] };
+                    nodes[id] = { id, name: label, code, ord, children: [] };
                 } else {
                     nodes[id].name = label;
-                    nodes[id].code = code; // Gán giá trị code nếu node đã tồn tại
+                    nodes[id].code = code;
+                    nodes[id].ord = ord;
                 }
-        
+
                 if (parentId !== null) {
                     if (!nodes[parentId]) {
-                        nodes[parentId] = { id: parentId, name: "", code: "", children: [] };
+                        nodes[parentId] = { id: parentId, name: "", code: "", ord: Number.MAX_SAFE_INTEGER, children: [] };
                     }
                     nodes[parentId].children.push(nodes[id]);
+
+                    // 🛠 Sắp xếp lại children theo `ord`
+                    nodes[parentId].children.sort((a, b) => a.ord - b.ord);
                 }
             });
-        
+
             return nodes[rootId] || null; // Trả về node gốc đã chọn
         }
 
-        async function setFilterOrgCodeByDepartmentCode(lstDepartmentCode, isAll) {
+        async function setFilterOrg(lstFilter, isAll) {
             try {
                 // Chuyển filterValue về chuỗi hoặc giá trị mặc định
-                let filterStr = (lstDepartmentCode !== null && lstDepartmentCode !== undefined) ? String(lstDepartmentCode).toUpperCase() : "ALL";
+                let filterStr = (lstFilter !== null && lstFilter !== undefined) ? String(lstFilter).toUpperCase() : "ALL";
 
                 await Promise.allSettled(worksheets.map(async (ws) => {
                     // 🔹 Lấy danh sách filters hiện có trên worksheet
@@ -179,13 +187,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-                    if (!lstDepartmentCode || lstDepartmentCode === "ALL" || lstDepartmentCode.trim() === "" || isAll === "ALL") {
+                    if (!lstFilter || lstFilter === "ALL" || lstFilter.trim() === "" || isAll === "ALL") {
                         // 🔹 Nếu filterValue rỗng hoặc là "ALL" => Clear filter
                         document.getElementById("selected-box").value = 'ALL';
                         await ws.clearFilterAsync(filterField);
                     } else {
                         // 🔹 Kiểm tra nếu filterValue là một mảng thì truyền mảng, nếu không thì truyền giá trị đơn lẻ
-                        await ws.applyFilterAsync(filterField, lstDepartmentCode.split(",").map(item => item.trim()), "replace");
+                        await ws.applyFilterAsync(filterField, lstFilter.split(",").map(item => item.trim()), "replace");
                     }
                 }));
 
@@ -200,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // thiết lập giá trị khởi tạo ban đầu
             selectedData = {
                 "action": "INIT",
-                "selectedIds": [],
+                "selectedIds": "ALL",
                 "selectedCodes": "ALL",
                 "showIds": ["ALL"],
                 "isAll": "ALL",
@@ -209,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             localStorage.setItem("selectedData", JSON.stringify(selectedData));
             localStorage.setItem("departmentCode", selectedData.selectedCodes);
+            localStorage.setItem("selectedIds", selectedData.selectedIds);
 
             document.getElementById("selected-box").value = 'ALL';
 
